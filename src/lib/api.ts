@@ -1,7 +1,8 @@
-const API_BASE = '/api'
+const API_BASE = 'https://nexum-crm-production.up.railway.app/api'
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token')
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
@@ -23,13 +24,17 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(error.error || `Request failed with status ${response.status}`)
+    const error = await response.json().catch(() => ({
+      error: 'Request failed',
+    }))
+
+    throw new Error(
+      error.error || `Request failed with status ${response.status}`
+    )
   }
 
   return response.json()
 }
-
 export const api = {
   // Auth
   loginWithGoogle: (credential: string) =>

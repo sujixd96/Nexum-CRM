@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  email         String     @unique
+  name          String?
+  avatar        String?
+  role          UserRole   @default(MEMBER)
+  googleId      String?    @unique
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  leadsUpdated  Lead[]     @relation("LeadUpdater")
+  activities    Activity[]
+  categories    Category[] @relation("CategoryCreator")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   Int?
+  creator     User?    @relation("CategoryCreator", fields: [createdBy], references: [id])
+  leads       Lead[]
+}
+
+model Lead {
+  id                Int           @id @default(autoincrement())
+  categoryId        Int
+  category          Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  businessName      String
+  ownerName         String?
+  phone             String?
+  city              String?
+  googleProfileUrl  String?
+  googleReviewCount Int           @default(0)
+  status            LeadStatus    @default(NOT_CONTACTED)
+  notes             String?
+  isCalled          Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  updatedBy         Int?
+  updater           User?         @relation("LeadUpdater", fields: [updatedBy], references: [id])
+  activities        Activity[]
+}
+
+model Activity {
+  id          Int          @id @default(autoincrement())
+  leadId      Int
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId      Int?
+  user        User?        @relation(fields: [userId], references: [id])
+  action      ActivityAction
+  oldValue    String?
+  newValue    String?
+  createdAt   DateTime     @default(now())
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum LeadStatus {
+  NOT_CONTACTED
+  CALLED
+  INTERESTED
+  FOLLOW_UP
+  CONVERTED
+  REJECTED
+}
+
+enum ActivityAction {
+  STATUS_CHANGED
+  CALLED
+  NOTE_ADDED
+  CREATED
+  UPDATED
+  DELETED
+}

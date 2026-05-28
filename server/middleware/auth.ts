@@ -1,7 +1,8 @@
 import type { Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { prisma } from '../lib/prisma'
-import type { AuthRequest } from '../types'
+
+import { prisma } from '../lib/prisma.js'
+import type { AuthRequest } from '../types.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'boss_level_secret_key_123'
 

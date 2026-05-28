@@ -1,11 +1,13 @@
-
 import { Router } from 'express'
-import { authenticate, requireAdmin } from '../middleware/auth'
-import { prisma } from '../lib/prisma'
+
+import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { prisma } from '../lib/prisma.js'
+
 import multer from 'multer'
 import XLSX from 'xlsx'
 import path from 'path'
-import type { AuthRequest } from '../types'
+
+import type { AuthRequest } from '../types.js'
 
 const router = Router()
 
@@ -183,7 +185,7 @@ router.post(
       const category =
         await prisma.category.findUnique({
           where: {
-            slug: categorySlug,
+            slug: String(categorySlug),
           },
         })
 

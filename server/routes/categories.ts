@@ -1,8 +1,9 @@
 import { Router } from 'express'
-import { authenticate, requireAdmin } from '../middleware/auth'
-import { prisma } from '../lib/prisma'
-import type { AuthRequest } from '../types'
 
+import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { prisma } from '../lib/prisma.js'
+
+import type { AuthRequest } from '../types.js'
 const router = Router()
 
 // GET /api/categories - Get all categories with stats
@@ -75,7 +76,7 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
 // DELETE /api/categories/:id - Delete a category (admin only)
 router.delete('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id)
+    const id = parseInt(String(req.params.id))
     await prisma.category.delete({
       where: { id },
     })

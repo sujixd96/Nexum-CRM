@@ -1,7 +1,9 @@
 import { Router } from 'express'
-import { authenticate, requireAdmin } from '../middleware/auth'
-import { prisma } from '../lib/prisma'
-import type { AuthRequest } from '../types'
+
+import { authenticate, requireAdmin } from '../middleware/auth.js'
+import { prisma } from '../lib/prisma.js'
+
+import type { AuthRequest } from '../types.js'
 import type { LeadStatus } from '@prisma/client'
 
 const router = Router()
@@ -103,7 +105,7 @@ router.get('/categories/:slug/leads', authenticate, async (req: AuthRequest, res
 // GET /api/leads/:id - Get a single lead
 router.get('/leads/:id', authenticate, async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id)
+    const id = parseInt(String(req.params.id))
     const lead = await prisma.lead.findUnique({
       where: { id },
       include: {
@@ -200,7 +202,7 @@ router.post('/categories/:slug/leads', authenticate, requireAdmin, async (req: A
 // PATCH /api/leads/:id - Update a lead
 router.patch('/leads/:id', authenticate, async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id)
+    const id = parseInt(String(req.params.id))
     const {
       businessName,
       ownerName,
@@ -285,7 +287,7 @@ router.patch('/leads/:id', authenticate, async (req: AuthRequest, res) => {
 // DELETE /api/leads/:id - Delete a lead (admin only)
 router.delete('/leads/:id', authenticate, requireAdmin, async (_req: AuthRequest, res) => {
   try {
-    const id = parseInt(_req.params.id)
+    const id = parseInt(String(_req.params.id))
     await prisma.lead.delete({ where: { id } })
     return res.json({ success: true })
   } catch (error: any) {
@@ -316,7 +318,7 @@ router.post('/leads/bulk-delete', authenticate, requireAdmin, async (req: AuthRe
 // GET /api/leads/:id/activities - Get lead activities
 router.get('/leads/:id/activities', authenticate, async (_req: AuthRequest, res) => {
   try {
-    const id = parseInt(_req.params.id)
+    const id = parseInt(String(_req.params.id))
     const activities = await prisma.activity.findMany({
       where: { leadId: id },
       orderBy: { createdAt: 'desc' },

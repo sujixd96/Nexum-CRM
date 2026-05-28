@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { OAuth2Client } from 'google-auth-library'
 import jwt from 'jsonwebtoken'
-import { prisma } from '../lib/prisma'
+
+import { prisma } from '../lib/prisma.js'
 
 const router = Router()
 

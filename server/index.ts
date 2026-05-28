@@ -2,12 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import path from 'path'
-import authRoutes from './routes/auth'
-import categoryRoutes from './routes/categories'
-import leadRoutes from './routes/leads'
-import uploadRoutes from './routes/upload'
-import statsRoutes from './routes/stats'
 
+import authRoutes from './routes/auth.js'
+import categoryRoutes from './routes/categories.js'
+import leadRoutes from './routes/leads.js'
+import uploadRoutes from './routes/upload.js'
+import statsRoutes from './routes/stats.js'
 dotenv.config()
 
 const app = express()

@@ -3,19 +3,19 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"vite\"",
-    "server:dev": "tsx server/index.ts",
-    "server": "node dist/server/index.js",
-   "build": "tsc -b && vite build && tsc -p tsconfig.server.json",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate",
-    "db:seed": "tsx server/seed.ts",
-    "db:studio": "prisma studio"
-  },
+"scripts": {
+  "dev": "concurrently \"npm run server:dev\" \"vite\"",
+  "server:dev": "tsx server/index.ts",
+  "server": "node dist/server/index.js",
+  "build": "vite build && tsc -p tsconfig.server.json",
+  "lint": "eslint .",
+  "preview": "vite preview",
+  "db:push": "prisma db push",
+  "db:migrate": "prisma migrate dev",
+  "db:generate": "prisma generate",
+  "db:seed": "tsx server/seed.ts",
+  "db:studio": "prisma studio"
+},
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.22.0",

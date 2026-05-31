@@ -35,7 +35,6 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   return response.json()
 }
-
 export const api = {
   // Auth
   loginWithGoogle: (credential: string) =>
@@ -89,13 +88,13 @@ export const api = {
 
   getLeadActivities: (id: number) => fetchWithAuth(`/leads/${id}/activities`),
 
-  // Fix: Upload endpoint changed from /upload/:slug to /import/:slug to match layout architecture 
+  // Upload
   uploadExcel: (categorySlug: string, file: File, mapping?: Record<string, string>) => {
     const formData = new FormData()
     formData.append('file', file)
     if (mapping) formData.append('mapping', JSON.stringify(mapping))
 
-    return fetch(`${API_BASE}/import/${categorySlug}`, {
+    return fetch(`${API_BASE}/upload/${categorySlug}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
@@ -104,12 +103,11 @@ export const api = {
     }).then(r => r.json())
   },
 
-  // Fix: Route endpoint updated from /upload/detect-columns to /detect-columns
   detectColumns: (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
 
-    return fetch(`${API_BASE}/detect-columns`, {
+    return fetch(`${API_BASE}/upload/detect-columns`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token') || ''}`,

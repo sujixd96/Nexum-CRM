@@ -6,8 +6,8 @@ import path from 'path'
 import authRoutes from './routes/auth.js'
 import categoryRoutes from './routes/categories.js'
 import leadRoutes from './routes/leads.js'
-
 import statsRoutes from './routes/stats.js'
+
 dotenv.config()
 
 const app = express()
@@ -21,11 +21,10 @@ app.use(express.urlencoded({ extended: true }))
 // Serve uploads statically
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
-// API Routes
+// API Routes Mounted Pipelines
 app.use('/api/auth', authRoutes)
 app.use('/api/categories', categoryRoutes)
-app.use('/api', leadRoutes)
-
+app.use('/api', leadRoutes) // Holds direct paths for /api/detect-columns and /api/import/:categorySlug
 app.use('/api/stats', statsRoutes)
 
 // Health check

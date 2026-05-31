@@ -10,7 +10,6 @@ import type { LeadStatus } from '@prisma/client'
 
 const router = Router()
 
-// Multer setup for Excel, CSV, and JSON imports
 const upload = multer({
   dest: 'uploads/',
   limits: {
@@ -28,18 +27,16 @@ const upload = multer({
   },
 })
 
-// Helper function to handle string query values safely
 function toString(val: string | string[] | undefined): string | undefined {
   if (Array.isArray(val)) return val[0]
   return val
 }
 
-// Helper function to safely parse and extract array dataset from JSON file
+// System Smart Parser: Extract keys directly from raw user data array
 const extractJsonArray = (filePath: string): any[] => {
   const raw = fs.readFileSync(filePath, 'utf8')
   let parsedData = JSON.parse(raw)
 
-  // Automatic nested check: Agar root level par object mile toh array key dhoodho (e.g., { "leads": [...] })
   if (!Array.isArray(parsedData) && typeof parsedData === 'object' && parsedData !== null) {
     const keyWithArray = Object.keys(parsedData).find(key => Array.isArray(parsedData[key]))
     if (keyWithArray) {
@@ -49,11 +46,73 @@ const extractJsonArray = (filePath: string): any[] => {
   return parsedData
 }
 
-// ==========================================
-// 1. LEAD EXCEL/JSON FILE IMPORT ROUTES
-// ==========================================
+// Helper block to auto match field headers regardless of source format type (JSON/Excel)
+const runAutoMapping = (headers: string[]) => {
+  const detectedMapping: Record<string, string> = {}
+  
+  headers.forEach((header) => {
+    const h = header.toLowerCase()
 
-// POST /api/leads/detect-columns - Detect headers/fields for column mapping
+    if (
+      h === 'title' ||
+      h.includes('business') ||
+      h.includes('company') ||
+      h.includes('gym') ||
+      h.includes('restaurant') ||
+      h.includes('shop') ||
+      h.includes('name')
+    ) {
+      if (!detectedMapping.businessName) detectedMapping.businessName = header
+    }
+
+    if (
+      h.includes('owner') ||
+      h.includes('contact person') ||
+      h.includes('person')
+    ) {
+      detectedMapping.ownerName = header
+    }
+
+    if (
+      h.includes('phone') ||
+      h.includes('mobile') ||
+      h.includes('contact') ||
+      h.includes('number')
+    ) {
+      detectedMapping.phone = header
+    }
+
+    if (
+      h.includes('city') ||
+      h.includes('location') ||
+      h.includes('place') ||
+      h.includes('area')
+    ) {
+      detectedMapping.city = header
+    }
+
+    if (h.includes('review') || h.includes('rating') || h.includes('count')) {
+      detectedMapping.googleReviewCount = header
+    }
+
+    if (
+      h === 'url' ||
+      h.includes('google') ||
+      h.includes('profile') ||
+      h.includes('link')
+    ) {
+      detectedMapping.googleProfileUrl = header
+    }
+
+    if (h.includes('note') || h.includes('remark') || h.includes('street')) {
+      detectedMapping.notes = header
+    }
+  })
+
+  return detectedMapping
+}
+
+// POST /api/leads/detect-columns
 router.post(
   '/detect-columns',
   authenticate,
@@ -62,9 +121,7 @@ router.post(
   async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({
-          error: 'No file uploaded',
-        })
+        return res.status(400).json({ error: 'No file uploaded' })
       }
 
       const ext = path.extname(req.file.originalname).toLowerCase()
@@ -74,32 +131,24 @@ router.post(
         try {
           rows = extractJsonArray(req.file.path)
         } catch (jsonErr) {
-          return res.status(400).json({
-            error: 'Invalid JSON file content syntax structure',
-          })
+          return res.status(400).json({ error: 'Invalid JSON file content syntax structure' })
         }
 
         if (!Array.isArray(rows) || rows.length === 0) {
           return res.status(400).json({
-            error: 'Invalid JSON format. Target data must be an array or contain a valid data array.',
+            error: 'Invalid JSON format. Dataset must be an array of objects.',
           })
         }
 
+        // Dynamically get the keys from the uploaded JSON object (e.g., "title", "totalScore")
         const headers = Object.keys(rows[0] || {})
+        const detectedMapping = runAutoMapping(headers)
 
         return res.json({
           success: true,
           headers,
           preview: rows.slice(0, 5),
-          detectedMapping: {
-            businessName: 'businessName',
-            ownerName: 'ownerName',
-            phone: 'phone',
-            city: 'city',
-            googleProfileUrl: 'googleProfileUrl',
-            googleReviewCount: 'googleReviewCount',
-            notes: 'notes',
-          },
+          detectedMapping,
         })
       }
 
@@ -109,71 +158,11 @@ router.post(
       rows = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' })
 
       if (!rows || rows.length === 0) {
-        return res.status(400).json({
-          error: 'No data found in file',
-        })
+        return res.status(400).json({ error: 'No data found in file' })
       }
 
       const headers = Object.keys(rows[0] || {})
-      const detectedMapping: Record<string, string> = {}
-
-      headers.forEach((header) => {
-        const h = header.toLowerCase()
-
-        if (
-          h.includes('business') ||
-          h.includes('company') ||
-          h.includes('gym') ||
-          h.includes('restaurant') ||
-          h.includes('shop') ||
-          h.includes('name')
-        ) {
-          detectedMapping.businessName = header
-        }
-
-        if (
-          h.includes('owner') ||
-          h.includes('contact person') ||
-          h.includes('person')
-        ) {
-          detectedMapping.ownerName = header
-        }
-
-        if (
-          h.includes('phone') ||
-          h.includes('mobile') ||
-          h.includes('contact') ||
-          h.includes('number')
-        ) {
-          detectedMapping.phone = header
-        }
-
-        if (
-          h.includes('city') ||
-          h.includes('location') ||
-          h.includes('place') ||
-          h.includes('area')
-        ) {
-          detectedMapping.city = header
-        }
-
-        if (h.includes('review') || h.includes('rating')) {
-          detectedMapping.googleReviewCount = header
-        }
-
-        if (
-          h.includes('google') ||
-          h.includes('profile') ||
-          h.includes('url') ||
-          h.includes('link')
-        ) {
-          detectedMapping.googleProfileUrl = header
-        }
-
-        if (h.includes('note') || h.includes('remark')) {
-          detectedMapping.notes = header
-        }
-      })
+      const detectedMapping = runAutoMapping(headers)
 
       return res.json({
         success: true,
@@ -183,9 +172,7 @@ router.post(
       })
     } catch (error: any) {
       console.error('Detect Columns Error:', error)
-      return res.status(500).json({
-        error: error.message || 'Failed to detect columns',
-      })
+      return res.status(500).json({ error: error.message || 'Failed to detect columns' })
     } finally {
       if (req.file && fs.existsSync(req.file.path)) {
         try { fs.unlinkSync(req.file.path) } catch {}
@@ -194,7 +181,7 @@ router.post(
   }
 )
 
-// POST /api/leads/import/:categorySlug - Process file mapping and save entries to database
+// POST /api/leads/import/:categorySlug
 router.post(
   '/import/:categorySlug',
   authenticate,
@@ -207,21 +194,15 @@ router.post(
       const mapping = JSON.parse(req.body.mapping || '{}')
 
       if (!req.file) {
-        return res.status(400).json({
-          error: 'No file uploaded',
-        })
+        return res.status(400).json({ error: 'No file uploaded' })
       }
 
       const category = await prisma.category.findUnique({
-        where: {
-          slug: String(categorySlug),
-        },
+        where: { slug: String(categorySlug) },
       })
 
       if (!category) {
-        return res.status(404).json({
-          error: 'Category not found',
-        })
+        return res.status(404).json({ error: 'Category not found' })
       }
 
       const ext = path.extname(req.file.originalname).toLowerCase()
@@ -231,15 +212,11 @@ router.post(
         try {
           rows = extractJsonArray(req.file.path)
         } catch (jsonErr) {
-          return res.status(400).json({
-            error: 'Invalid JSON format or dataset structure syntax',
-          })
+          return res.status(400).json({ error: 'Invalid JSON dataset file structure syntax' })
         }
         
         if (!Array.isArray(rows) || rows.length === 0) {
-          return res.status(400).json({
-            error: 'Invalid JSON format or empty array dataset target',
-          })
+          return res.status(400).json({ error: 'Invalid JSON format or empty array dataset target' })
         }
       } else {
         const workbook = XLSX.readFile(req.file.path)
@@ -268,9 +245,7 @@ router.post(
             where: {
               OR: [
                 phone ? { phone } : undefined,
-                {
-                  businessName: String(businessName),
-                },
+                { businessName: String(businessName) },
               ].filter(Boolean) as any,
             },
           })
@@ -314,9 +289,7 @@ router.post(
       })
     } catch (error: any) {
       console.error('Upload Error:', error)
-      return res.status(500).json({
-        error: error.message || 'Upload failed',
-      })
+      return res.status(500).json({ error: error.message || 'Upload failed' })
     } finally {
       if (filePathToClean && fs.existsSync(filePathToClean)) {
         try { fs.unlinkSync(filePathToClean) } catch {}
@@ -325,11 +298,7 @@ router.post(
   }
 )
 
-// ==========================================
-// 2. STANDARD CRUD OPERATIONS FOR LEADS
-// ==========================================
-
-// GET /api/categories/:slug/leads - Get leads for a category with search, filter, sort
+// GET /api/categories/:slug/leads
 router.get('/categories/:slug/leads', authenticate, async (req: AuthRequest, res) => {
   try {
     const { slug } = req.params
@@ -381,9 +350,7 @@ router.get('/categories/:slug/leads', authenticate, async (req: AuthRequest, res
         skip,
         take: limitNum,
         include: {
-          updater: {
-            select: { name: true, email: true }
-          }
+          updater: { select: { name: true, email: true } }
         }
       }),
       prisma.lead.count({ where }),
@@ -418,7 +385,7 @@ router.get('/categories/:slug/leads', authenticate, async (req: AuthRequest, res
   }
 })
 
-// GET /api/leads/:id - Get a single lead
+// GET /api/leads/:id
 router.get('/leads/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(String(req.params.id))
@@ -446,7 +413,7 @@ router.get('/leads/:id', authenticate, async (req: AuthRequest, res) => {
   }
 })
 
-// POST /api/categories/:slug/leads - Create a new lead manually (admin only)
+// POST /api/categories/:slug/leads
 router.post('/categories/:slug/leads', authenticate, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { slug } = req.params
@@ -514,7 +481,7 @@ router.post('/categories/:slug/leads', authenticate, requireAdmin, async (req: A
   }
 })
 
-// PATCH /api/leads/:id - Update a single lead data
+// PATCH /api/leads/:id
 router.patch('/leads/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const id = parseInt(String(req.params.id))
@@ -530,9 +497,7 @@ router.patch('/leads/:id', authenticate, async (req: AuthRequest, res) => {
       isCalled,
     } = req.body
 
-    const existingLead = await prisma.lead.findUnique({
-      where: { id },
-    })
+    const existingLead = await prisma.lead.findUnique({ where: { id } })
 
     if (!existingLead) {
       return res.status(404).json({ error: 'Lead not found' })
@@ -599,7 +564,7 @@ router.patch('/leads/:id', authenticate, async (req: AuthRequest, res) => {
   }
 })
 
-// DELETE /api/leads/:id - Delete a single lead (admin only)
+// DELETE /api/leads/:id
 router.delete('/leads/:id', authenticate, requireAdmin, async (_req: AuthRequest, res) => {
   try {
     const id = parseInt(String(_req.params.id))
@@ -611,7 +576,7 @@ router.delete('/leads/:id', authenticate, requireAdmin, async (_req: AuthRequest
   }
 })
 
-// POST /api/leads/bulk-delete - Bulk delete selected leads (admin only)
+// POST /api/leads/bulk-delete
 router.post('/leads/bulk-delete', authenticate, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { ids } = req.body
@@ -630,7 +595,7 @@ router.post('/leads/bulk-delete', authenticate, requireAdmin, async (req: AuthRe
   }
 })
 
-// GET /api/leads/:id/activities - Get lead lifecycle history logs
+// GET /api/leads/:id/activities
 router.get('/leads/:id/activities', authenticate, async (_req: AuthRequest, res) => {
   try {
     const id = parseInt(String(_req.params.id))

@@ -97,7 +97,6 @@ export default function ExcelUploadModal({
       setFile(selectedFile)
       setLoading(true)
 
-      // Verified API Action: Triggering column verification via lead router controller
       const response = await api.detectColumns(selectedFile)
       console.log('Detect Columns Raw Response:', response)
 
@@ -140,7 +139,6 @@ export default function ExcelUploadModal({
       setLoading(true)
       setStep('processing')
 
-      // Verified API Action: Uploading via combined endpoints model structure
       const response = await api.uploadExcel(
         categorySlug,
         file,
@@ -235,7 +233,7 @@ export default function ExcelUploadModal({
 
               {headers.length === 0 && (
                 <div className="text-red-400 text-sm mb-4">
-                  No attributes detected from dataset file 😭 Verify nested JSON array formatting.
+                  No attributes detected from dataset file 😭 Verify data keys inside JSON structure.
                 </div>
               )}
 

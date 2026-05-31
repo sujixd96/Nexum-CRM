@@ -45,13 +45,23 @@ router.post(
 
       if (ext === '.json') {
         const raw = fs.readFileSync(req.file.path, 'utf8')
-        rows = JSON.parse(raw)
+       const parsed = JSON.parse(raw)
 
-        if (!Array.isArray(rows) || rows.length === 0) {
-          return res.status(400).json({
-            error: 'Invalid JSON format',
-          })
-        }
+if (Array.isArray(parsed)) {
+  rows = parsed
+} else if (typeof parsed === 'object' && parsed !== null) {
+  rows = [parsed]
+} else {
+  return res.status(400).json({
+    error: 'Invalid JSON format',
+  })
+}
+
+if (rows.length === 0) {
+  return res.status(400).json({
+    error: 'JSON file is empty',
+  })
+}
 
         const headers = Object.keys(rows[0])
 
@@ -59,15 +69,13 @@ router.post(
           success: true,
           headers,
           preview: rows.slice(0, 5),
-          detectedMapping: {
-            businessName: 'businessName',
-            ownerName: 'ownerName',
-            phone: 'phone',
-            city: 'city',
-            googleProfileUrl: 'googleProfileUrl',
-            googleReviewCount: 'googleReviewCount',
-            notes: 'notes',
-          },
+         detectedMapping: {
+  businessName: 'title',
+  phone: 'phone',
+  city: 'city',
+  googleProfileUrl: 'url',
+  googleReviewCount: 'reviewsCount',
+},
         })
       }
 
@@ -192,14 +200,24 @@ router.post(
 
       // Handle JSON logic during parsing and importing
       if (ext === '.json') {
-        const raw = fs.readFileSync(req.file.path, 'utf8')
-        rows = JSON.parse(raw)
-        
-        if (!Array.isArray(rows) || rows.length === 0) {
-          return res.status(400).json({
-            error: 'Invalid JSON format or empty array',
-          })
-        }
+       const raw = fs.readFileSync(req.file.path, 'utf8')
+const parsed = JSON.parse(raw)
+
+if (Array.isArray(parsed)) {
+  rows = parsed
+} else if (typeof parsed === 'object' && parsed !== null) {
+  rows = [parsed]
+} else {
+  return res.status(400).json({
+    error: 'Invalid JSON format',
+  })
+}
+
+if (rows.length === 0) {
+  return res.status(400).json({
+    error: 'JSON file is empty',
+  })
+}
       } else {
         // Handle Excel / CSV parsing
         const workbook = XLSX.readFile(req.file.path)

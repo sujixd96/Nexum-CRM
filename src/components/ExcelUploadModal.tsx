@@ -97,10 +97,8 @@ export default function ExcelUploadModal({
       setFile(selectedFile)
       setLoading(true)
 
-      const response = await api.detectColumns(selectedFile)
-      console.log('Detect Columns Raw Response:', response)
-
-      const data = response?.data ? response.data : response
+      const data = await api.detectColumns(selectedFile)
+      console.log('Detect Columns Final Processed Payload:', data)
 
       const safeHeaders = Array.isArray(data?.headers)
         ? data.headers.filter(
@@ -139,13 +137,13 @@ export default function ExcelUploadModal({
       setLoading(true)
       setStep('processing')
 
-      const response = await api.uploadExcel(
+      const data = await api.uploadExcel(
         categorySlug,
         file,
         mapping
       )
+      console.log('Upload Leads Final Processed Payload:', data)
 
-      const data = response?.data ? response.data : response
       setResult(data)
       setStep('result')
       onSuccess()

@@ -6,7 +6,7 @@ import path from 'path'
 import authRoutes from './routes/auth.js'
 import categoryRoutes from './routes/categories.js'
 import leadRoutes from './routes/leads.js'
-import uploadRoutes from './routes/upload.ts'
+import uploadRoutes from './routes/upload.js'
 import statsRoutes from './routes/stats.js'
 dotenv.config()
 

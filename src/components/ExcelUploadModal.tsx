@@ -84,58 +84,49 @@ export default function ExcelUploadModal({
 
   const handleFile = async (selectedFile: File) => {
     try {
-      const validExtensions = [
-  '.xlsx',
-  '.xls',
-  '.csv',
-  '.json',
-]
+      const validExtensions = ['.xlsx', '.xls', '.csv', '.json']
       const ext = selectedFile.name
         .slice(selectedFile.name.lastIndexOf('.'))
         .toLowerCase()
 
       if (!validExtensions.includes(ext)) {
-       alert(
-  'Please upload a .xlsx, .xls, .csv, or .json file'
-)
+        alert('Please upload a .xlsx, .xls, .csv, or .json file')
         return
       }
 
       setFile(selectedFile)
       setLoading(true)
 
-      const res = await api.detectColumns(
-        selectedFile
-      )
+      const response = await api.detectColumns(selectedFile)
+      console.log('Detect Columns Raw Response:', response)
 
-      console.log('Detect Columns Response:', res)
+      // Fix: Some Axios setups bundle response attributes inside response.data
+      const data = response?.data ? response.data : response
 
-      const safeHeaders = Array.isArray(res?.headers)
-        ? res.headers.filter(
+      const safeHeaders = Array.isArray(data?.headers)
+        ? data.headers.filter(
             (h: any) =>
               typeof h === 'string' &&
               h.trim() !== ''
           )
         : []
 
-      const safePreview = Array.isArray(res?.preview)
-        ? res.preview
+      const safePreview = Array.isArray(data?.preview)
+        ? data.preview
         : []
 
       setHeaders(safeHeaders)
       setPreview(safePreview)
-
-      setMapping(res?.detectedMapping || {})
+      setMapping(data?.detectedMapping || {})
 
       setStep('mapping')
     } catch (error: any) {
       console.error(error)
-
       alert(
-        error?.message ||
+        error?.response?.data?.error ||
+          error?.message ||
           'Failed to detect columns'
       )
-
       setFile(null)
     } finally {
       setLoading(false)
@@ -149,24 +140,23 @@ export default function ExcelUploadModal({
       setLoading(true)
       setStep('processing')
 
-      const res = await api.uploadExcel(
+      const response = await api.uploadExcel(
         categorySlug,
         file,
         mapping
       )
 
-      setResult(res)
-
+      const data = response?.data ? response.data : response
+      setResult(data)
       setStep('result')
-
       onSuccess()
     } catch (error: any) {
       console.error(error)
-
       alert(
-        error?.message || 'Upload failed'
+        error?.response?.data?.error || 
+          error?.message || 
+          'Upload failed'
       )
-
       setStep('mapping')
     } finally {
       setLoading(false)
@@ -186,7 +176,6 @@ export default function ExcelUploadModal({
             <h2 className="text-lg font-semibold text-white">
               Upload Leads
             </h2>
-
             <p className="text-xs text-[#737373]">
               Import leads into {categoryName}
             </p>
@@ -226,12 +215,10 @@ export default function ExcelUploadModal({
 
               <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F59E0B] text-black rounded-lg cursor-pointer">
                 <FileSpreadsheet className="w-4 h-4" />
-
                 Browse Files
-
                 <input
                   type="file"
-               accept=".xlsx,.xls,.csv,.json"
+                  accept=".xlsx,.xls,.csv,.json"
                   className="hidden"
                   onChange={handleFileInput}
                 />
@@ -242,12 +229,12 @@ export default function ExcelUploadModal({
           {step === 'mapping' && (
             <div>
               <p className="text-sm text-[#737373] mb-4">
-                Map your Excel columns
+                Map your file columns
               </p>
 
               {headers.length === 0 && (
                 <div className="text-red-400 text-sm mb-4">
-                  No headers detected from excel file 😭
+                  No headers detected from file 😭 Check if data array structure matches.
                 </div>
               )}
 
@@ -263,14 +250,11 @@ export default function ExcelUploadModal({
 
                     <div className="relative flex-1">
                       <select
-                        value={
-                          mapping[field.key] || ''
-                        }
+                        value={mapping[field.key] || ''}
                         onChange={(e) =>
                           setMapping((prev) => ({
                             ...prev,
-                            [field.key]:
-                              e.target.value,
+                            [field.key]: e.target.value,
                           }))
                         }
                         className="w-full px-3 py-2 bg-[#0A0A0A] border border-[#262626] rounded-lg text-white appearance-none"
@@ -283,13 +267,14 @@ export default function ExcelUploadModal({
                           <option
                             key={h}
                             value={h}
+                            defaultValue={mapping[field.key]}
                           >
                             {h}
                           </option>
                         ))}
                       </select>
 
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737373]" />
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737373] pointer-events-none" />
                     </div>
                   </div>
                 ))}
@@ -300,7 +285,6 @@ export default function ExcelUploadModal({
           {step === 'processing' && (
             <div className="text-center py-12">
               <Loader2 className="w-10 h-10 animate-spin text-[#F59E0B] mx-auto mb-4" />
-
               <p className="text-white">
                 Uploading leads...
               </p>
@@ -318,9 +302,8 @@ export default function ExcelUploadModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[#0A0A0A] p-4 rounded-lg">
                   <p className="text-2xl font-bold text-white">
-                    {result.summary.total}
+                    {result.summary?.total || 0}
                   </p>
-
                   <p className="text-xs text-[#737373]">
                     Total
                   </p>
@@ -328,9 +311,8 @@ export default function ExcelUploadModal({
 
                 <div className="bg-[#0A0A0A] p-4 rounded-lg">
                   <p className="text-2xl font-bold text-green-400">
-                    {result.summary.created}
+                    {result.summary?.created || 0}
                   </p>
-
                   <p className="text-xs text-[#737373]">
                     Created
                   </p>
@@ -358,7 +340,6 @@ export default function ExcelUploadModal({
               className="flex items-center gap-2 px-4 py-2 bg-[#F59E0B] text-black rounded-lg disabled:opacity-50"
             >
               <Upload className="w-4 h-4" />
-
               Upload Leads
             </button>
           )}

@@ -85,19 +85,19 @@ export default function ExcelUploadModal({
   const handleFile = async (selectedFile: File) => {
     try {
       const validExtensions = [
-        '.xlsx',
-        '.xls',
-        '.csv',
-      ]
-
+  '.xlsx',
+  '.xls',
+  '.csv',
+  '.json',
+]
       const ext = selectedFile.name
         .slice(selectedFile.name.lastIndexOf('.'))
         .toLowerCase()
 
       if (!validExtensions.includes(ext)) {
-        alert(
-          'Please upload a .xlsx, .xls, or .csv file'
-        )
+       alert(
+  'Please upload a .xlsx, .xls, .csv, or .json file'
+)
         return
       }
 
@@ -221,7 +221,7 @@ export default function ExcelUploadModal({
               </p>
 
               <p className="text-xs text-[#737373] mb-4">
-                Supports .xlsx, .xls, .csv
+                Supports .xlsx, .xls, .csv, .json
               </p>
 
               <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#F59E0B] text-black rounded-lg cursor-pointer">
@@ -231,7 +231,7 @@ export default function ExcelUploadModal({
 
                 <input
                   type="file"
-                  accept=".xlsx,.xls,.csv"
+               accept=".xlsx,.xls,.csv,.json"
                   className="hidden"
                   onChange={handleFileInput}
                 />

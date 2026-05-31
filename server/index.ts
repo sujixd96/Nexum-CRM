@@ -6,7 +6,7 @@ import path from 'path'
 import authRoutes from './routes/auth.js'
 import categoryRoutes from './routes/categories.js'
 import leadRoutes from './routes/leads.js'
-import uploadRoutes from './routes/upload.js'
+
 import statsRoutes from './routes/stats.js'
 dotenv.config()
 
@@ -25,7 +25,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 app.use('/api/auth', authRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api', leadRoutes)
-app.use('/api/upload', uploadRoutes)
+
 app.use('/api/stats', statsRoutes)
 
 // Health check

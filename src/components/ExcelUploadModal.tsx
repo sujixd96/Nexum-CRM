@@ -97,10 +97,10 @@ export default function ExcelUploadModal({
       setFile(selectedFile)
       setLoading(true)
 
+      // Verified API Action: Triggering column verification via lead router controller
       const response = await api.detectColumns(selectedFile)
       console.log('Detect Columns Raw Response:', response)
 
-      // Fix: Some Axios setups bundle response attributes inside response.data
       const data = response?.data ? response.data : response
 
       const safeHeaders = Array.isArray(data?.headers)
@@ -140,6 +140,7 @@ export default function ExcelUploadModal({
       setLoading(true)
       setStep('processing')
 
+      // Verified API Action: Uploading via combined endpoints model structure
       const response = await api.uploadExcel(
         categorySlug,
         file,
@@ -229,12 +230,12 @@ export default function ExcelUploadModal({
           {step === 'mapping' && (
             <div>
               <p className="text-sm text-[#737373] mb-4">
-                Map your file columns
+                Map your file dataset fields
               </p>
 
               {headers.length === 0 && (
                 <div className="text-red-400 text-sm mb-4">
-                  No headers detected from file 😭 Check if data array structure matches.
+                  No attributes detected from dataset file 😭 Verify nested JSON array formatting.
                 </div>
               )}
 
@@ -267,7 +268,6 @@ export default function ExcelUploadModal({
                           <option
                             key={h}
                             value={h}
-                            defaultValue={mapping[field.key]}
                           >
                             {h}
                           </option>
@@ -305,7 +305,7 @@ export default function ExcelUploadModal({
                     {result.summary?.total || 0}
                   </p>
                   <p className="text-xs text-[#737373]">
-                    Total
+                    Total Rows
                   </p>
                 </div>
 
@@ -314,7 +314,7 @@ export default function ExcelUploadModal({
                     {result.summary?.created || 0}
                   </p>
                   <p className="text-xs text-[#737373]">
-                    Created
+                    Leads Created
                   </p>
                 </div>
               </div>
